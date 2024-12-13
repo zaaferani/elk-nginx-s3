@@ -1,0 +1,5 @@
+/certs/**
+!/certs/instances.yaml
+.env
+!/minio/.env
+minio/minio_data

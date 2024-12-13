@@ -1,0 +1,156 @@
+services:
+  elasticsearch01:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      # - ./elasticsearch/config/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:rw,Z
+      - ./../certs:/usr/share/elasticsearch/config/certs:rw,Z
+      - elasticsearch01:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      node.name: elasticsearch01
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      # discovery.type: single-node
+      discovery.seed_hosts: elasticsearch02,elasticsearch03
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+      minio_access_key: ${minio_access_key}
+      minio_secret_key: ${minio_secret_key}
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    - "s3.mydomain:host-gateway"
+    networks:
+      - elk_s3
+    restart: unless-stopped
+  
+  elasticsearch02:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      # - ./elasticsearch/config/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:rw,Z
+      - ./../certs:/usr/share/elasticsearch/config/certs:ro,Z
+      - elasticsearch02:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9202:9200
+    environment:
+      node.name: elasticsearch02
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.seed_hosts: elasticsearch01,elasticsearch03
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    - "s3.mydomain:host-gateway"
+    networks:
+      - elk_s3
+    restart: unless-stopped
+  
+  elasticsearch03:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      # - ./elasticsearch/config/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:rw,Z
+      - ./../certs:/usr/share/elasticsearch/config/certs:ro,Z
+      - elasticsearch03:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9203:9200
+    environment:
+      node.name: elasticsearch03
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.seed_hosts: elasticsearch01,elasticsearch02
+      cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    - "s3.mydomain:host-gateway"
+    networks:
+      - elk_s3
+    restart: unless-stopped
+
+  kibana:
+    build:
+      context: kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+      - ./../certs:/usr/share/kibana/config/certs
+    ports:
+      - 5601:5601
+    environment:
+      XPACK_ENCRYPTION_KEY: ${XPACK_ENCRYPTION_KEY}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - elk_s3
+    depends_on:
+      - elasticsearch01
+    restart: unless-stopped
+  
+  create_certs:
+    profiles:
+      - certs
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    command: >
+      bash -c '
+        ls -la /certs;
+        
+        if [[ ! -f /certs/ca.zip ]]; then
+          echo "Creating CA";
+          bin/elasticsearch-certutil ca --silent --pem -out /certs/ca.zip;
+          unzip /certs/ca.zip -d /certs;
+        fi;
+
+        if [[ ! -f /certs/certs.zip ]]; then
+          echo "Creating certs";
+          bin/elasticsearch-certutil cert --silent --pem --in /certs/instances.yaml -out /certs/certs.zip --ca-cert /certs/ca/ca.crt --ca-key /certs/ca/ca.key;
+          unzip /certs/certs.zip -d /certs;
+        fi;
+
+        echo "Setting file permissions"
+        chown -R 1000:0 /certs;
+        find /certs/ -type d -exec chmod 750 \{\} \;;
+        find /certs/ -type f -exec chmod 640 \{\} \;;
+      '
+    working_dir: /usr/share/elasticsearch
+    volumes:
+      - ./../certs:/certs
+    networks:
+      - elk_s3
+
+networks:
+  elk_s3:
+    driver: bridge
+
+volumes:
+  elasticsearch01:
+  elasticsearch02:
+  elasticsearch03:

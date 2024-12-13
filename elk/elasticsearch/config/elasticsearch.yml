@@ -1,0 +1,30 @@
+---
+## Default Elasticsearch configuration from Elasticsearch base image.
+## https://github.com/elastic/elasticsearch/blob/main/distribution/docker/src/docker/config/elasticsearch.yml
+#
+cluster.name: my-elk-cluster
+network.host: 0.0.0.0
+
+## X-Pack settings
+## see https://www.elastic.co/guide/en/elasticsearch/reference/current/security-settings.html
+#
+xpack.license.self_generated.type: basic
+xpack.security.enabled: true
+
+xpack.security.http.ssl:
+  enabled: true
+  certificate_authorities: /usr/share/elasticsearch/config/certs/ca/ca.crt
+  verification_mode: certificate
+  key: /usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.key
+  certificate: /usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.crt
+
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  certificate_authorities: /usr/share/elasticsearch/config/certs/ca/ca.crt
+  key: /usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.key
+  certificate: /usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.crt
+
+s3.client.default.endpoint: "http://s3.mydomain"  # Replace with actual MinIO server endpoint
+s3.client.default.protocol: http                        # Replace with actual protocol (http/https)
+s3.client.default.path_style_access: true               # Set to true if using MinIO server
