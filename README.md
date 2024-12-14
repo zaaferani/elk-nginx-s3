@@ -41,8 +41,7 @@ Set environment variables:
 ```bash
 cd elk
 cp .env.example .env
-sed -i "s/ELASTIC_VERSION=8.15.1/g" .env
-sed -i "s/minio_access_key=<YOUR_ACCESS_KEY>/minio_secret_key=<YOUR_ACCESS_KEY>/g" .env
+sed -i "s/your_minio_access_key=<YOUR_ACCESS_KEY>/your_minio_secret_key=<YOUR_ACCESS_KEY>/g" .env
 ```
 
 If you use diffrent domain name, change `s3.client.default.endpoint` to your s3 domain name
