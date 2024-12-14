@@ -3,13 +3,13 @@
 ## Prerequisites
 - Docker > v20
 
-## set domain
+## Set domain
 ```bash
 echo "127.0.0.1 mydomain s3.mydomain elasticsearch.mydomain kibana.mydomain" >> /etc/hosts
 ```
 
 ## Run nginx reverse proxy
-In the first disable elasticsearch and kibana server in nginx.conf and run nginx:
+In the first disable elasticsearch and kibana server (comment lines 22:66) in nginx.conf and run nginx:
 
 ```bash
 docker compose -f nginx/docker-compose.yaml up -d
@@ -94,7 +94,7 @@ curl -k -X PUT "https://elasticsearch.mydomain/_snapshot/my-snapshot?pretty" -H 
 ## Create snapshot
 ```bash
 curl -k -X PUT "https://elasticsearch.mydomain/_snapshot/my-snapshot/snapshot-$(date -I)?wait_for_completion=true&pretty" \
--u 'elastic:06ae0f8a4a452331ba80' -H 'Content-Type: application/json' \
+-u 'elastic:your-elastic-password' -H 'Content-Type: application/json' \
 -d '{
   "indices": "my-index",
   "ignore_unavailable": true

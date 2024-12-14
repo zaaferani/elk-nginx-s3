@@ -74,3 +74,6 @@ wait_for_elasticsearch || exit_code=$?
 docker compose exec -T elasticsearch01 bash < setup_keystore.sh
 docker compose exec -T elasticsearch02 bash < setup_keystore.sh
 docker compose exec -T elasticsearch03 bash < setup_keystore.sh
+
+# must be reload elasticsearch
+docker compose exec -T elasticsearch01 bash < reload_node.sh

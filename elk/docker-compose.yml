@@ -56,6 +56,8 @@ services:
       # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.seed_hosts: elasticsearch01,elasticsearch03
       cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+      minio_access_key: ${minio_access_key}
+      minio_secret_key: ${minio_secret_key}
     extra_hosts:
     - "host.docker.internal:host-gateway"
     - "s3.mydomain:host-gateway"
@@ -86,6 +88,8 @@ services:
       # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.seed_hosts: elasticsearch01,elasticsearch02
       cluster.initial_master_nodes: elasticsearch01,elasticsearch02,elasticsearch03
+      minio_access_key: ${minio_access_key}
+      minio_secret_key: ${minio_secret_key}
     extra_hosts:
     - "host.docker.internal:host-gateway"
     - "s3.mydomain:host-gateway"
